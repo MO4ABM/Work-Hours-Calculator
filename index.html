@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Hours Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #fafafa;
+            background-image: radial-gradient(circle, #e5e5e5 1px, transparent 1px);
+            background-size: 20px 20px;
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding-top: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e5e5;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+
+        .card.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card:nth-child(2) {
+            transition-delay: 0.2s;
+        }
+
+        .summary-card {
+            text-align: center;
+        }
+
+        .period-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .period-range {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 32px;
+        }
+
+        .hours-display {
+            text-align: center;
+        }
+
+        .hours-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .hours-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.4s ease;
+        }
+
+        .stat-item.animate {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .stat-item:nth-child(1) { transition-delay: 0.1s; }
+        .stat-item:nth-child(2) { transition-delay: 0.2s; }
+        .stat-item:nth-child(3) { transition-delay: 0.3s; }
+        .stat-item:nth-child(4) { transition-delay: 0.4s; }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .holidays-section {
+            margin-top: 32px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+            transition-delay: 0.6s;
+        }
+
+        .holidays-section.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .holiday-list {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e5e5;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .holiday-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideInLeft 0.4s ease forwards;
+        }
+
+        .holiday-item:nth-child(n) {
+            animation-delay: calc(0.1s * var(--index, 0));
+        }
+
+        .holiday-item:last-child {
+            border-bottom: none;
+        }
+
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .holiday-info {
+            flex: 1;
+        }
+
+        .holiday-name {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .holiday-date {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .holiday-badge {
+            background: #1a1a1a;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        .holiday-badge.in-lieu {
+            background: #059669;
+        }
+
+        .holiday-badge.hijri {
+            background: #666;
+        }
+
+        .holiday-badge.hijri {
+            background: #666;
+        }
+
+        .holiday-badge.in-lieu {
+            background: #059669;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 80px 20px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #e5e5e5;
+            border-top: 2px solid #1a1a1a;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .refresh-btn {
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 16px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 24px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+            margin-right: auto;
+            transition: all 0.2s ease;
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        .refresh-btn:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+
+        .refresh-btn.animate {
+            opacity: 1;
+            transform: translateY(0);
+            transition-delay: 0.8s;
+        }
+
+        .refresh-btn svg {
+            will-change: transform;
+            transform-origin: center;
+            transition: transform 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86); /* match button timing */
+        }
+
+        .refresh-btn:hover svg {
+            transform: rotate(45deg);
+        }
+
+        .no-holidays {
+            text-align: center;
+            color: #666;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+            color: #999;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+  
+        .footer.reveal { /* When content is shown, also show footer with delay */
+            opacity: 1;
+            transform: translateY(0);
+            /* transition-delay: 1s; */
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 0;
+            }
+            
+            .header {
+                padding-top: 20px;
+                margin-bottom: 24px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .header p {
+                font-size: 14px;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                margin-bottom: 20px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .period-range {
+                font-size: 16px;
+                margin-bottom: 20px;
+            }
+            
+            .hours-number {
+                font-size: 36px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            
+            .stat-item {
+                padding: 16px 12px;
+            }
+            
+            .stat-number {
+                font-size: 24px;
+            }
+            
+            .stat-label {
+                font-size: 11px;
+            }
+            
+            .holidays-section {
+                margin-top: 20px;
+            }
+            
+            .section-title {
+                font-size: 18px;
+                margin-bottom: 16px;
+            }
+            
+            .holiday-list {
+                max-height: 300px;
+            }
+            
+            .holiday-item {
+                padding: 16px 20px;
+            }
+            
+            .holiday-name {
+                font-size: 14px;
+            }
+            
+            .holiday-date {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            
+            .stat-item {
+                padding: 12px 8px;
+            }
+            
+            .stat-number {
+                font-size: 20px;
+            }
+            
+            .hours-number {
+                font-size: 32px;
+            }
+            
+            .period-range {
+                font-size: 14px;
+            }
+        }
+
+        /* Ensure mobile viewport fits without scrolling for main content */
+        @media (max-height: 700px) and (max-width: 768px) {
+            .header {
+                padding-top: 10px;
+                margin-bottom: 16px;
+            }
+            
+            .card {
+                padding: 16px;
+            }
+            
+            .hours-number {
+                font-size: 28px;
+            }
+            
+            .period-range {
+                margin-bottom: 16px;
+            }
+            
+            .stat-item {
+                padding: 12px 8px;
+            }
+            
+            .holidays-section {
+                margin-top: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Work Hours Calculator</h1>
+            <p id="dynamicSubtitle">Company month tracking system</p>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <div>Calculating work hours...</div>
+        </div>
+
+        <div id="content" style="display: none;">
+            <div class="main-content">
+                <div class="card summary-card">
+                    <div class="period-text">Current Period</div>
+                    <div class="period-range" id="periodRange">Loading...</div>
+                    
+                    <div class="hours-display">
+                        <div class="hours-number" id="requiredHours">0</div>
+                        <div class="hours-label">Required Hours</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number" id="totalDays">0</div>
+                            <div class="stat-label">Total Days</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="workingDays">0</div>
+                            <div class="stat-label">Working Days</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="weekendDays">0</div>
+                            <div class="stat-label">Weekend Days</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="holidayDays">0</div>
+                            <div class="stat-label">Holiday Days</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="holidays-section">
+                <div class="section-title">
+                    <svg width="32px" height="32px" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                        <g id="scheduler" fill="#000000" transform="translate(64.000000, 64.000000)">
+                            <path d="M384,1.42108547e-14 L384,384 L1.42108547e-14,384 L1.42108547e-14,1.42108547e-14 L384,1.42108547e-14 Z M341.333333,128 L42.6666667,128 L42.6666667,341.333333 L341.333333,341.333333 L341.333333,128 Z M128,256 L128,298.666667 L85.3333333,298.666667 L85.3333333,256 L128,256 Z M213.333333,256 L213.333333,298.666667 L170.666667,298.666667 L170.666667,256 L213.333333,256 Z M298.666667,256 L298.666667,298.666667 L256,298.666667 L256,256 L298.666667,256 Z M128,170.666667 L128,213.333333 L85.3333333,213.333333 L85.3333333,170.666667 L128,170.666667 Z M213.333333,170.666667 L213.333333,213.333333 L170.666667,213.333333 L170.666667,170.666667 L213.333333,170.666667 Z M298.666667,170.666667 L298.666667,213.333333 L256,213.333333 L256,170.666667 L298.666667,170.666667 Z M341.333333,42.6666667 L42.6666667,42.6666667 L42.6666667,85.3333333 L341.333333,85.3333333 L341.333333,42.6666667 Z" id="Combined-Shape"></path>
+                        </g>
+                    </g>
+                </svg>Holidays & Vacations 
+                </div>
+                <div class="holiday-list" id="holidayList">
+                    <div class="no-holidays">
+                        No holidays in this period
+                    </div>
+                </div>
+            </div>
+
+            <button class="refresh-btn" onclick="calculateWorkHours()">
+                <svg version="1.1" id="svg2" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" sodipodi:docname="refresh.svg" inkscape:version="0.48.4 r9939" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16px" height="16px" viewBox="0 0 1200 1200" enable-background="new 0 0 1200 1200" xml:space="preserve">
+                <path fill="white" id="path18328" inkscape:connector-curvature="0" d="M600,0C308.74,0,66.009,207.555,11.499,482.812h166.553
+                    C229.37,297.756,398.603,161.719,600,161.719c121.069,0,230.474,49.195,309.668,128.613l-192.48,192.48h304.762H1200V0
+                    l-175.781,175.781C915.653,67.181,765.698,0,600,0z M0,717.188V1200l175.781-175.781C284.346,1132.819,434.302,1200,600,1200
+                    c291.26,0,533.991-207.555,588.501-482.812h-166.553C970.631,902.243,801.396,1038.281,600,1038.281
+                    c-121.069,0-230.474-49.195-309.668-128.613l192.48-192.48H0z"></path>
+                </svg>
+                &nbsp;&nbsp;&nbsp;&nbsp;Refresh Calculation
+            </button>
+            <footer class="footer">Made with ❤️ by Mostafa MO Mostafa</footer>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const config = {
+            workdayHours: 9,
+            monthStartDay: 25,
+            monthEndDay: 24,
+            weekendDays: [5, 6], // Friday = 5, Saturday = 6
+            inLieu: true, // add a substitute if on weekend so workers can benefit
+            vacationRanges: [
+                // Gregorian fixed-date holidays (MM-DD format)
+                { type: 'gregorian', name: 'عيد الميلاد المجيد', start: '01-07', inLieu: true },
+                { type: 'gregorian', name: 'عيد الشرطة / ثورة 25 يناير', start: '01-25', inLieu: true },
+                { type: 'gregorian', name: 'عيد تحرير سيناء', start: '04-25', inLieu: true },
+                { type: 'gregorian', name: 'عيد العمال', start: '05-01', inLieu: true },
+                // { type: 'gregorian', name: 'test', start: '08-01', inLieu: true }, Examble for inLieu
+                // { type: 'gregorian', name: 'ثورة 30 يونيو', start: '06-30', inLieu: true },
+                { type: 'gregorian', name: 'عيد الثورة - 23 يوليو', start: '07-23', inLieu: true },
+                { type: 'gregorian', name: 'عيد القوات المسلحة - نصر أكتوبر', start: '10-06', inLieu: true },
+                /// Hijri date holidays (MM-DD Hijri format, runtime converted)
+                { type: 'hijri', name: 'رأس السنة الهجرية (1 محرم)', start: '01-01' },
+                { type: 'hijri', name: 'المولد النبوي الشريف (12 ربيع الأول)', start: '03-12' },
+                { type: 'hijri', name: 'عيد الفطر', start: '10-01', end: '10-03' },
+                { type: 'hijri', name: 'عيد الأضحى', start: '12-10', end: '12-13' }
+            ]
+        };
+
+        // Update dynamic subtitle on page load
+        function updateDynamicSubtitle() {
+            const subtitle = document.getElementById('dynamicSubtitle');
+            subtitle.textContent = `Company month tracking system (${config.monthStartDay}th to ${config.monthEndDay}th)`;
+        }
+
+        // In-lieu holidays handler
+        function processInLieuHolidays(vacationRanges, currentYear) {
+            const expandedVacations = [];
+            
+            vacationRanges.forEach(vacation => {
+                if (vacation.type === 'gregorian' && vacation.inLieu === true) {
+                    const [month, day] = vacation.start.split('-').map(Number);
+                    const holidayDate = new Date(currentYear, month - 1, day);
+                    const dayOfWeek = holidayDate.getDay();
+                    
+                    if (dayOfWeek === 5 || dayOfWeek === 6) {
+                        // Calculate in-lieu date
+                        let inLieuDate = new Date(holidayDate);
+                        do {
+                            inLieuDate.setDate(inLieuDate.getDate() + 1);
+                        } while (inLieuDate.getDay() === 5 || inLieuDate.getDay() === 6);
+                        
+                        // Add in-lieu entry only
+                        expandedVacations.push({
+                            type: 'gregorian',
+                            name: `${vacation.name}`,
+                            start: toLocalDateString(inLieuDate),
+                            source: 'gregorian',
+                            isInLieu: true
+                        });
+                    } else {
+                        // Add original non-weekend holiday
+                        expandedVacations.push({
+                            ...vacation,
+                            start: toLocalDateString(holidayDate),
+                            source: 'gregorian',
+                            isInLieu: false
+                        });
+                    }
+                } else if (vacation.type === 'gregorian') {
+                    // Handle non-in-lieu gregorian holidays
+                    const [month, day] = vacation.start.split('-').map(Number);
+                    const holidayDate = new Date(currentYear, month - 1, day);
+                    if (!isWeekend(holidayDate)) {
+                        expandedVacations.push({
+                            ...vacation,
+                            start: toLocalDateString(holidayDate),
+                            source: 'gregorian',
+                            isInLieu: false
+                        });
+                    }
+                } else {
+                    // Add non-in-lieu holidays
+                    expandedVacations.push({
+                        ...vacation,
+                        source: vacation.type,
+                        isInLieu: false
+                    });
+                }
+            });
+            
+            return expandedVacations;
+        }
+
+        // Utility functions
+        function toLocalDateString(date) {
+            return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('en-US', { 
+                month: 'long', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        function isWeekend(date) {
+            return config.weekendDays.includes(date.getDay());
+        }
+
+        function isHoliday(date, holidays) {
+            const dateStr = toLocalDateString(date);
+            return holidays.some(holiday => holiday.date === dateStr);
+        }
+
+        function getCompanyMonthRange(referenceDate = new Date()) {
+            const year = referenceDate.getFullYear();
+            const month = referenceDate.getMonth();
+            const day = referenceDate.getDate();
+
+            let startMonth, startYear, endMonth, endYear;
+
+            if (day >= config.monthStartDay) {
+                // We're in the current company month (from 25th of current month)
+                startMonth = month;
+                startYear = year;
+                endMonth = month + 1;
+                endYear = year;
+            } else {
+                // We're in the previous company month (from 25th of previous month)
+                startMonth = month - 1;
+                startYear = year;
+                endMonth = month;
+                endYear = year;
+            }
+
+            // Handle year boundaries
+            if (startMonth < 0) {
+                startMonth = 11;
+                startYear--;
+            }
+            if (endMonth > 11) {
+                endMonth = 0;
+                endYear++;
+            }
+
+            const startDate = new Date(startYear, startMonth, config.monthStartDay);
+            const endDate = new Date(endYear, endMonth, config.monthEndDay);
+
+            return { startDate, endDate };
+        }
+
+        function processVacations(startDate, endDate) {
+            const holidays = [];
+            const startYear = startDate.getFullYear();
+            const endYear = endDate.getFullYear();
+
+            // Process in-lieu holidays for each year
+            for (let year = startYear; year <= endYear; year++) {
+                const expandedVacations = processInLieuHolidays(config.vacationRanges, year);
+                
+                expandedVacations.forEach(vacation => {
+                    if (vacation.type === 'gregorian') {
+                        let holidayDate;
+                        
+                        if (vacation.isInLieu) {
+                            // Already has full date
+                            holidayDate = new Date(vacation.start);
+                        } else {
+                            // Convert MM-DD to full date
+                            const [month, day] = vacation.start.split('-').map(Number);
+                            holidayDate = new Date(year, month - 1, day);
+                        }
+                        
+                        if (holidayDate >= startDate && holidayDate <= endDate) {
+                            holidays.push({
+                                date: toLocalDateString(holidayDate),
+                                name: vacation.name,
+                                source: vacation.isInLieu ? 'in-lieu' : vacation.type,
+                                dateObj: holidayDate
+                            });
+                        }
+
+                        // Handle multi-day holidays
+                        if (vacation.end && !vacation.isInLieu) {
+                            const [endMonth, endDay] = vacation.end.split('-').map(Number);
+                            const endHolidayDate = new Date(year, endMonth - 1, endDay);
+                            
+                            let currentDate = new Date(holidayDate);
+                            currentDate.setDate(currentDate.getDate() + 1);
+                            
+                            while (currentDate <= endHolidayDate && currentDate <= endDate) {
+                                if (currentDate >= startDate) {
+                                    holidays.push({
+                                        date: toLocalDateString(currentDate),
+                                        name: vacation.name,
+                                        source: vacation.type,
+                                        dateObj: new Date(currentDate)
+                                    });
+                                }
+                                currentDate.setDate(currentDate.getDate() + 1);
+                            }
+                        }
+                    }
+                    // Note: Hijri calendar conversion would require a proper library
+                    // For now, treating hijri dates as approximate gregorian dates
+                    else if (vacation.type === 'hijri') {
+                        const [month, day] = vacation.start.split('-').map(Number);
+                        const holidayDate = new Date(year, month - 1, day);
+                        
+                        if (holidayDate >= startDate && holidayDate <= endDate) {
+                            holidays.push({
+                                date: toLocalDateString(holidayDate),
+                                name: vacation.name,
+                                source: vacation.type,
+                                dateObj: holidayDate
+                            });
+                        }
+
+                        if (vacation.end) {
+                            const [endMonth, endDay] = vacation.end.split('-').map(Number);
+                            const endHolidayDate = new Date(year, endMonth - 1, endDay);
+                            
+                            let currentDate = new Date(holidayDate);
+                            currentDate.setDate(currentDate.getDate() + 1);
+                            
+                            while (currentDate <= endHolidayDate && currentDate <= endDate) {
+                                if (currentDate >= startDate) {
+                                    holidays.push({
+                                        date: toLocalDateString(currentDate),
+                                        name: vacation.name,
+                                        source: vacation.type,
+                                        dateObj: new Date(currentDate)
+                                    });
+                                }
+                                currentDate.setDate(currentDate.getDate() + 1);
+                            }
+                        }
+                    }
+                });
+            }
+
+            return holidays;
+        }
+
+        // Main calculation function
+        function workHoursCalculator(options = {}) {
+            const { startDate, endDate, config: customConfig } = options;
+            const activeConfig = customConfig || config;
+            
+            let calcStartDate, calcEndDate;
+            
+            if (startDate && endDate) {
+                calcStartDate = new Date(startDate);
+                calcEndDate = new Date(endDate);
+            } else {
+                const range = getCompanyMonthRange();
+                calcStartDate = range.startDate;
+                calcEndDate = range.endDate;
+            }
+
+            const holidays = processVacations(calcStartDate, calcEndDate);
+            
+            let totalDays = 0;
+            let weekendDays = 0;
+            let holidayDays = 0;
+            let workingDays = 0;
+
+            const currentDate = new Date(calcStartDate);
+            while (currentDate <= calcEndDate) {
+                totalDays++;
+                
+                if (isWeekend(currentDate)) {
+                    weekendDays++;
+                } else if (isHoliday(currentDate, holidays)) {
+                    // Count as holiday regardless of origin
+                    holidayDays++;
+                } else {
+                    workingDays++;
+                }
+                
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            const requiredHours = workingDays * activeConfig.workdayHours;
+
+        return {
+            startDate: toLocalDateString(calcStartDate),
+            endDate: toLocalDateString(calcEndDate),
+                totalDays,
+                weekendDays,
+                holidayDays,
+                workingDays,
+                requiredHours,
+                holidayDetails: holidays.sort((a, b) => new Date(a.date) - new Date(b.date))
+            };
+        }
+
+        // Animation functions
+        function triggerAnimations() {
+            // Animate cards
+            setTimeout(() => {
+                document.querySelectorAll('.card').forEach(card => {
+                    card.classList.add('animate');
+                });
+            }, 100);
+
+            // Animate stats
+            setTimeout(() => {
+                document.querySelectorAll('.stat-item').forEach(item => {
+                    item.classList.add('animate');
+                });
+            }, 300);
+
+            // Animate holidays section
+            setTimeout(() => {
+                document.querySelector('.holidays-section').classList.add('animate');
+            }, 400);
+
+            // Animate button
+            setTimeout(() => {
+                const btn = document.querySelector('.refresh-btn');
+                btn.classList.add('animate');
+                
+                // Remove transition delays after animation completes
+                btn.addEventListener('transitionend', () => {
+                    btn.style.transition = 'background 0.2s ease, transform 0.2s ease';
+                }, { once: true });
+            }, 700);
+
+            // Animate holiday items
+            setTimeout(() => {
+                document.querySelectorAll('.holiday-item').forEach((item, index) => {
+                    item.style.setProperty('--index', index);
+                });
+            }, 800);
+
+            // Animate footer
+            setTimeout(function () {
+                document.querySelector('.footer').classList.add('reveal');
+            }, 1000); // Adjust this delay to match your design (in milliseconds)
+        }
+
+        // // Animate btn
+        // const btn = document.getElementById('refreshBtn');
+        // const icon = btn.querySelector('.btn-icon');
+
+        // btn.addEventListener('mouseenter', () => {
+        // icon.style.transform = 'rotate(45deg)';
+        // });
+
+        // btn.addEventListener('mouseleave', () => {
+        // icon.style.transform = 'rotate(0deg)';
+        // });
+
+        // UI Update functions
+        function updateUI(result) {
+            const startDate = new Date(result.startDate);
+            const endDate = new Date(result.endDate);
+            
+            document.getElementById('periodRange').textContent = 
+                `${formatDate(startDate)} – ${formatDate(endDate)}`;
+            
+            document.getElementById('requiredHours').textContent = result.requiredHours;
+            document.getElementById('totalDays').textContent = result.totalDays;
+            document.getElementById('workingDays').textContent = result.workingDays;
+            document.getElementById('weekendDays').textContent = result.weekendDays;
+            document.getElementById('holidayDays').textContent = result.holidayDays;
+
+            // Update holidays list
+            const holidayList = document.getElementById('holidayList');
+            if (result.holidayDetails.length === 0) {
+                holidayList.innerHTML = `
+                    <div class="no-holidays">
+                        No holidays in this period
+                    </div>
+                `;
+            } else {
+                holidayList.innerHTML = result.holidayDetails.map((holiday, index) => `
+                    <div class="holiday-item" style="--index: ${index}">
+                        <div class="holiday-info">
+                            <div class="holiday-name">${holiday.name}</div>
+                            <div class="holiday-date">${formatDate(new Date(holiday.date))}</div>
+                        </div>
+                        <div class="holiday-badge ${holiday.source}">${holiday.source}</div>
+                        ${holiday.isInLieu ? `<div class="holiday-badge in-lieu">in-lieu</div>` : ''}
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Main calculation and display function
+        function calculateWorkHours() {
+            // Reset animations
+            document.querySelectorAll('.card, .stat-item, .holidays-section, .refresh-btn, .footer').forEach(el => {
+                el.classList.remove('animate', 'reveal');
+            });
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('content').style.display = 'none';
+
+            // Simulate loading for better UX
+            setTimeout(() => {
+                try {
+                    const result = workHoursCalculator();
+                    updateUI(result);
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('content').style.display = 'block';
+                    
+                    // Trigger animations
+                    triggerAnimations();
+                } catch (error) {
+                    console.error('Error calculating work hours:', error);
+                    document.getElementById('loading').innerHTML = `
+                        <div style="color: #dc2626;">
+                            Error calculating work hours. Please try again.
+                        </div>
+                    `;
+                }
+            }, 1000);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDynamicSubtitle();
+            calculateWorkHours();
+        });
+
+        // Make the calculator function globally available for API usage
+        window.workHoursCalculator = workHoursCalculator;
+        window.processInLieuHolidays = processInLieuHolidays;
+    </script>
+</body>
+</html>
